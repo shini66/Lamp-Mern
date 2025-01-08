@@ -7,9 +7,29 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use MongoDB\BSON\UTCDateTime;
 use DateTime;
+use Illuminate\Support\Facades\Auth;
 
 class MongoController extends Controller
 {
+
+    public function login(Request $request)
+    {
+        $credentials = $request->only('email', 'password');
+
+        if (Auth::attempt($credentials)) {
+            $user = Auth::user();
+            $token = $user->createToken('authToken')->plainTextToken;
+
+            return response()->json([
+                'user' => $user->name,
+                'access_token' => $token,
+                'token_type' => 'Bearer',
+            ], 200);
+        }
+
+        return response()->json(['error' => 'Unauthorized'], 401);
+    }
+
     public function products()
     {
         $result = DB::connection('mongodb')->table('productos')->get();
@@ -63,7 +83,13 @@ class MongoController extends Controller
 
         $data = iterator_to_array($result);
 
-        return response()->json($data);
+        $newData = [
+            'status' => 'success',
+            'count' => count($data),
+            'data' => $data
+        ];
+
+        return response()->json($newData);
     }
 
     function filterUser(Request $request)
@@ -89,7 +115,13 @@ class MongoController extends Controller
 
         $data = iterator_to_array($result);
 
-        return response()->json($data);
+        $newData = [
+            'status' => 'success',
+            'count' => count($data),
+            'data' => $data
+        ];
+
+        return response()->json($newData);
     }
 
     public function searchSales(Request $request){
